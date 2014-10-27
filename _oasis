@@ -48,7 +48,7 @@ Executable lwt_test
   Install: false
   CompiledObject: best
   MainIs: lwt_test.ml  
-  BuildDepends: erm_xmpp, lwt, tls.lwt, erm_treap
+  BuildDepends: erm_xmpp, lwt, tls.lwt, erm_treap, otr
 
 Executable test_ie
   Path: tests
