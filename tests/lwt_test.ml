@@ -89,15 +89,35 @@ open XMPPClient
 
 module Version = XEP_version.Make (XMPPClient)
 
-let message_callback t stanza =
-  (match stanza.content.body with
-    | None -> ()
-    | Some v -> print_endline v);
+type otr = { mutable state : Otr.State.session }
+
+let message_callback otr t stanza =
+  let out = match stanza.content.body with
+  | None -> print_endline "received nothing :/" ; "nothing"
+  | Some v ->
+    let ctx, out, warn, received, plain = Otr.Handshake.handle otr.state v in
+    (match plain with
+     | None -> print_endline "no plaintext received!"
+     | Some p -> print_endline ("plain message: " ^ p)) ;
+    (match warn with
+     | None -> print_endline "no warn"
+     | Some w -> print_endline ("warning: " ^ w)) ;
+    (match received with
+     | None -> print_endline "no text received"
+     | Some c -> print_endline ("received encrypted: " ^ c)) ;
+    otr.state <- ctx ;
+    match out with
+    | None ->
+      let ctx, out = Otr.Handshake.start_otr otr.state in
+      otr.state <- ctx ;
+      out
+    | Some c -> c
+  in
   send_message t ?jid_to:stanza.jid_from
     ?id:stanza.id
     ?kind:stanza.content.message_type
     ?lang:stanza.lang
-    ?body:stanza.content.body ()
+    ?body:(Some out) ()
 
 let message_error t ?id ?jid_from ?jid_to ?lang error =
   print_endline ("message error: " ^ error.err_text);
@@ -113,8 +133,12 @@ let presence_error t ?id ?jid_from ?jid_to ?lang error =
   print_endline ("presence error: " ^ error.err_text);
   return ()
     
+
 let session t =
   print_endline "in session" ;
+  let dsa = Nocrypto.Dsa.generate `Fips1024 in
+  Printf.printf "my fp" ; Cstruct.hexdump (Otr.Crypto.OtrDsa.fingerprint (Nocrypto.Dsa.pub_of_priv dsa)) ;
+  let otr = { state = (Otr.State.empty_session ~dsa ()) } in
   register_iq_request_handler t Version.ns_version
     (fun ev _jid_from _jid_to _lang () ->
       match ev with
@@ -127,7 +151,7 @@ let session t =
           fail BadRequest
     );
   register_stanza_handler t (ns_client, "message")
-    (parse_message ~callback:message_callback ~callback_error:message_error);
+    (parse_message ~callback:(message_callback otr) ~callback_error:message_error);
   register_stanza_handler t (ns_client, "presence")
     (parse_presence ~callback:presence_callback ~callback_error:presence_error);
   print_endline "sending presence" ;
