@@ -631,11 +631,11 @@ struct
         register_stanza_handler
           session_data (ns_xmpp_sasl, "failure") step2_failure;
         send session_data
-          (Xmlstream.stanza_serialize session_data.ser
-             (make_element (ns_xmpp_sasl, "response") [] [Xmlcdata resp]))
+           (Xmlstream.stanza_serialize session_data.ser
+              (make_element (ns_xmpp_sasl, "response") [] [Xmlcdata resp]))
     and step2_challenge session_data _attrs els =
       unregister_stanza_handler session_data (ns_xmpp_sasl, "challenge");
-		  Sasl.sasl_digest_rspauth (collect_cdata els);
+      Sasl.sasl_digest_rspauth (collect_cdata els);
       send session_data
         (Xmlstream.stanza_serialize session_data.ser
            (make_element (ns_xmpp_sasl, "response") [] []))
@@ -680,8 +680,8 @@ struct
         (Xmlstream.stanza_serialize session_data.ser
            (make_element (ns_xmpp_sasl, "auth")
               [make_attr "mechanism" "PLAIN"] [Xmlcdata sasl_data]))
-        
-        
+
+
   let sasl_auth session_data features lang password  session_handler =
     let mechanisms = get_element (ns_xmpp_sasl, "mechanisms") features in
     let mels = get_subelements (ns_xmpp_sasl, "mechanism") mechanisms in

@@ -93,7 +93,7 @@ type otr = { mutable state : Otr.State.session }
 
 let message_callback otr t stanza =
   let out = match stanza.content.body with
-  | None -> print_endline "received nothing :/" ; "nothing"
+  | None -> print_endline "received nothing :/" ; None
   | Some v ->
     let ctx, out, warn, received, plain = Otr.Handshake.handle otr.state v in
     (match plain with
@@ -108,16 +108,21 @@ let message_callback otr t stanza =
     otr.state <- ctx ;
     match out with
     | None ->
-      let ctx, out = Otr.Handshake.start_otr otr.state in
+      let ctx, out, warn = Otr.Handshake.send_otr otr.state "nothing to send" in
       otr.state <- ctx ;
-      out
-    | Some c -> c
+      ( match warn with
+        | None -> ()
+        | Some t -> Printf.printf "warning from send_otr %s\n" t );
+      ( match out with
+        | [] -> None
+        | xs -> Some (String.concat "" xs) )
+    | Some c -> Some c
   in
   send_message t ?jid_to:stanza.jid_from
     ?id:stanza.id
     ?kind:stanza.content.message_type
     ?lang:stanza.lang
-    ?body:(Some out) ()
+    ?body:out ()
 
 let message_error t ?id ?jid_from ?jid_to ?lang error =
   print_endline ("message error: " ^ error.err_text);
@@ -138,7 +143,7 @@ let session t =
   print_endline "in session" ;
   let dsa = Nocrypto.Dsa.generate `Fips1024 in
   Printf.printf "my fp" ; Cstruct.hexdump (Otr.Crypto.OtrDsa.fingerprint (Nocrypto.Dsa.pub_of_priv dsa)) ;
-  let otr = { state = (Otr.State.empty_session ~dsa ()) } in
+  let otr = { state = (Otr.State.empty_session ~dsa ~policies:[`REQUIRE_ENCRYPTION] ()) } in
   register_iq_request_handler t Version.ns_version
     (fun ev _jid_from _jid_to _lang () ->
       match ev with
