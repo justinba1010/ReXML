@@ -120,7 +120,9 @@ let message_callback otr t stanza =
         | Some x when x = "bla" ->
           []
         | Some x when x = "bla2" ->
-          send "bla" @ send "bla"
+          let msg1 = send "bla" in
+          let msg2 = send "bla" in
+          msg1 @ msg2
         | Some x ->
           send x
         | None ->
