@@ -92,8 +92,8 @@ module Version = XEP_version.Make (XMPPClient)
 type otr = { mutable state : Otr.State.session }
 
 let message_callback otr t stanza =
-  let out = match stanza.content.body with
-  | None -> print_endline "received nothing :/" ; None
+  let send = match stanza.content.body with
+  | None -> print_endline "received nothing :/" ; []
   | Some v ->
     let ctx, out, warn, received, plain = Otr.Handshake.handle otr.state v in
     (match plain with
@@ -106,23 +106,33 @@ let message_callback otr t stanza =
      | None -> print_endline "no text received"
      | Some c -> print_endline ("received encrypted: " ^ c)) ;
     otr.state <- ctx ;
-    match out with
-    | None ->
-      let ctx, out, warn = Otr.Handshake.send_otr otr.state "nothing to send" in
-      otr.state <- ctx ;
+    let send msg =
+      let ctx, out, warn = Otr.Handshake.send_otr otr.state msg in
       ( match warn with
         | None -> ()
         | Some t -> Printf.printf "warning from send_otr %s\n" t );
-      ( match out with
-        | [] -> None
-        | xs -> Some (String.concat "" xs) )
-    | Some c -> Some c
+      otr.state <- ctx ;
+      out
+    in
+    match out with
+    | None ->
+      ( match received with
+        | Some x when x = "bla" ->
+          []
+        | Some x when x = "bla2" ->
+          send "bla" @ send "bla"
+        | Some x ->
+          send x
+        | None ->
+          send "nothing to send" )
+    | Some c -> [ c ]
   in
-  send_message t ?jid_to:stanza.jid_from
-    ?id:stanza.id
-    ?kind:stanza.content.message_type
-    ?lang:stanza.lang
-    ?body:out ()
+  Lwt_list.iter_s (fun out ->
+      send_message t ?jid_to:stanza.jid_from
+        ?id:stanza.id
+        ?kind:stanza.content.message_type
+        ?lang:stanza.lang
+        ?body:(Some out) ()) send
 
 let message_error t ?id ?jid_from ?jid_to ?lang error =
   print_endline ("message error: " ^ error.err_text);
