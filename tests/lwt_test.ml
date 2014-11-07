@@ -112,7 +112,9 @@ let message_callback otr t stanza =
         | None -> ()
         | Some t -> Printf.printf "warning from send_otr %s\n" t );
       otr.state <- ctx ;
-      out
+      match out with
+      | Some x -> [ x ]
+      | None -> []
     in
     match out with
     | None ->
