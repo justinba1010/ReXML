@@ -271,11 +271,11 @@ struct
     let jid_to = maybe string_of_jid jid_to in
     let jid_from = maybe string_of_jid jid_from in
     let attrs = make_stanza_attrs ~id ~kind ?jid_from ?jid_to ?lang () in
-      session_data.iq_response <-
-        IDCallback.add id callback session_data.iq_response;
-      send session_data
-        (Xmlstream.stanza_serialize session_data.ser
-           (make_element (ns_client, "iq") attrs [el]))
+    session_data.iq_response <-
+      IDCallback.add id callback session_data.iq_response;
+    send session_data
+      (Xmlstream.stanza_serialize session_data.ser
+         (make_element (ns_client, "iq") attrs [el]))
         
   type 'a stanza = {
     id : id option;
