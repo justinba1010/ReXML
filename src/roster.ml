@@ -30,7 +30,7 @@ struct
   }
 
   let decode attrs els =
-    
+
     let ver =
       try Some (get_attr_value "ver" attrs)
       with Not_found -> None in
@@ -95,7 +95,7 @@ struct
         | Xmlcdata _ -> acc
         ) [] els in
     (ver, List.rev items)
-        
+
   let ignore v = ignore v; return ()
 
   let get xmpp ?jid_from ?jid_to ?lang ?(error_callback=ignore) callback =
