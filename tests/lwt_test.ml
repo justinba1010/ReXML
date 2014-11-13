@@ -48,17 +48,13 @@ struct
   open Lwt
 
   let read s buf start len =
-    (if start > 0 then
-       print_endline "start != 0") ;
-    let cs = Cstruct.of_string buf in
+    let cs = Cstruct.create len in
     Tls_lwt.Unix.read s cs >>= fun size ->
-      if size > 0 then
-        (for i = 0 to size do
-           String.set buf i (Cstruct.get_char cs i)
-         done ;
-         print_string "IN TLS: "; print_endline (String.sub buf start size)
-         ) ;
-      return size
+    if size > 0 then
+      (String.blit (Cstruct.to_string cs) 0 buf start size ;
+       print_string "IN TLS: "; print_endline (String.sub buf start size)
+      ) ;
+    return size
 
   let write s str =
     print_string "OUT TLS: ";
