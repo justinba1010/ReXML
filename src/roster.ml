@@ -30,7 +30,6 @@ struct
   }
 
   let decode attrs els =
-
     let ver =
       try Some (get_attr_value "ver" attrs)
       with Not_found -> None in
