@@ -67,7 +67,7 @@ struct
 
   let switch fd host =
     Tls_lwt.rng_init () >>= fun () ->
-    X509_lwt.authenticator `No_authentication_I'M_STUPID >>= fun authenticator ->
+    X509_lwt.authenticator (`Ca_dir "certificates") >>= fun authenticator ->
     let config = Tls.Config.client ~authenticator () in
     Tls_lwt.Unix.client_of_fd config ~host fd
 
@@ -125,6 +125,15 @@ let message_callback otr t stanza =
           let msg1 = send "bla" in
           let msg2 = send "bla" in
           msg1 @ msg2
+        | Some x when x = "fin" ->
+          let ctx, out, warn = Otr.Handshake.end_otr otr.state in
+          ( match warn with
+            | None -> ()
+            | Some t -> Printf.printf "warning from end_otr %s\n" t );
+          otr.state <- ctx ;
+          ( match out with
+            | Some x -> [ x ]
+            | None -> [ "end_otr didn't want me to send anything" ] )
         | Some x ->
           send x
         | None ->
