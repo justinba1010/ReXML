@@ -30,12 +30,13 @@ struct
   }
 
   let decode attrs els =
+    
     let ver =
       try Some (get_attr_value "ver" attrs)
       with Not_found -> None in
     let items =
       List.fold_left (fun acc -> function
-        | Xmlelement ((ns_roster, "item"), attrs, els) ->
+          | Xmlelement ((ns_roster, "item"), attrs, els) ->
           let item =
             List.fold_left (fun item -> function
               | ((None, "approved"), value) ->
@@ -49,8 +50,9 @@ struct
                 else
                   item
               | ((None, "jid"), value) ->
-              (* TODO validity and verify *)
-                {item with jid = try JID.of_string value with _ -> item.jid}
+                (* TODO validity and verify *)
+                let jid = try JID.of_string value with _ -> item.jid in
+                { item with jid }
               | ((None, "name"), value) ->
                 {item with name = value}
               | ((None, "subscription"), value) ->
@@ -99,18 +101,18 @@ struct
   let get xmpp ?jid_from ?jid_to ?lang ?(error_callback=ignore) callback =
     let callback ev jid_from jid_to lang () =
       match ev with
-        | IQResult el -> (
+      | IQResult el -> (
           match el with
-            | Some (Xmlelement ((ns_roster, "query"), attrs, els)) ->
-              let ver, items = decode attrs els in
-                callback ?jid_from ?jid_to ?lang ?ver items
-            | _ ->
-              callback ?jid_from ?jid_to ?lang ?ver:None []
+          | Some (Xmlelement ((ns_roster, "query"), attrs, els)) ->
+            let ver, items = decode attrs els in
+            callback ?jid_from ?jid_to ?lang ?ver items
+          | _ ->
+            callback ?jid_from ?jid_to ?lang ?ver:None []
         )
-        | IQError err ->
-          error_callback err
+      | IQError err ->
+        error_callback err
     in
-      make_iq_request xmpp ?jid_from ?jid_to ?lang
-        (IQGet (make_element (ns_roster, "query") [] []))
-        callback
+    make_iq_request xmpp ?jid_from ?jid_to ?lang
+      (IQGet (make_element (ns_roster, "query") [] []))
+      callback
 end
