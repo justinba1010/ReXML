@@ -90,8 +90,9 @@ struct
               acc
             else
               item :: acc
-      ) [] els in
-      (ver, List.rev items)
+        | Xmlcdata _ -> acc
+        ) [] els in
+    (ver, List.rev items)
         
   let ignore v = ignore v; return ()
 
