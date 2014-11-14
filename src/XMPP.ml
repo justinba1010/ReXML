@@ -32,11 +32,11 @@ sig
   type iq_request =
     | IQSet of element
     | IQGet of element
-        
+
   type iq_response =
     | IQResult of element option
     | IQError of StanzaError.t
-        
+
   type iq =
     | IQRequest of iq_request
     | IQResponse of iq_response
@@ -64,13 +64,13 @@ sig
     content : 'a;
     x : element list
   }
-      
+
   type message_type =
     | Normal
     | Chat
     | Groupchat
     | Headline
-        
+
   type message_content = {
     message_type : message_type option;
     body : string option;
@@ -105,7 +105,7 @@ sig
     status : string option;
     priority : int option;
   }
-      
+
   type presence_stanza = presence_content stanza
   val parse_presence :
     callback:('a session_data -> presence_content stanza -> unit t) ->
@@ -136,7 +136,7 @@ struct
   exception StreamError of StreamError.t
   exception MalformedStanza
   exception BadRequest
-    
+
   module NS =
   struct
     type t = Xml.namespace
@@ -162,11 +162,11 @@ struct
   type iq_request =
     | IQSet of element
     | IQGet of element
-        
+
   type iq_response =
     | IQResult of element option
     | IQError of StanzaError.t
-        
+
   type iq =
     | IQRequest of iq_request
     | IQResponse of iq_response
@@ -180,7 +180,7 @@ struct
     val write : t -> string -> unit M.t
     val close : t -> unit M.t
   end
-      
+
   type 'a session_data = {
     mutable socket : (module Socket);
     p : X.p;
@@ -198,7 +198,7 @@ struct
     ser: Xml.Serialization.t;
     user_data : 'a
   }
-      
+
   let string_of_option opt = match opt with None -> "" | Some v -> v
   let maybe f = function None -> None | Some v -> Some (f v)
 
@@ -215,11 +215,11 @@ struct
        "to", (string_of_option jid_to);
        "from", (string_of_option jid_from);
        "type", (string_of_option kind)]
-      
+
   let make_stanza_attrs_reply ?lang ?kind attrs =
     let jid_to = safe_get_attr_value "to" attrs
     and jid_from = safe_get_attr_value "from" attrs
-    and id = safe_get_attr_value "id" attrs 
+    and id = safe_get_attr_value "id" attrs
     and kind = (
       match kind with
         | None -> safe_get_attr_value "type" attrs
@@ -239,7 +239,7 @@ struct
          "from", jid_to;
          "id", id;
          "type", kind]
-        
+
   let parse_stanza_attrs attrs =
     List.fold_left (fun (id, from, to_, kind, lang) (name, value) ->
       if name = (no_ns, "id") then
@@ -255,11 +255,11 @@ struct
       else
         (id, from, to_, kind, lang)
     ) (None, None, None, None, None) attrs
-      
+
   let send session_data v =
     let module S = (val session_data.socket : Socket) in
       S.write S.socket v
-          
+
   let make_iq_request session_data ?jid_from ?jid_to ?lang request callback =
     session_data.sid <- session_data.sid + 1;
     let id = string_of_int session_data.sid in
@@ -276,7 +276,7 @@ struct
     send session_data
       (Xmlstream.stanza_serialize session_data.ser
          (make_element (ns_client, "iq") attrs [el]))
-        
+
   type 'a stanza = {
     id : id option;
     jid_from : JID.t option;
@@ -285,13 +285,13 @@ struct
     content : 'a;
     x : element list
   }
-      
+
   type message_type =
     | Normal
     | Chat
     | Groupchat
     | Headline
-        
+
   type message_content = {
     message_type : message_type option;
     body : string option;
@@ -304,9 +304,9 @@ struct
     | Chat -> "chat"
     | Groupchat -> "groupchat"
     | Headline -> "headline"
-      
+
   type message_stanza = message_content stanza
-      
+
   let parse_message ~callback ~callback_error session_data attrs els =
     let id, jid_from, jid_to, kind, lang = parse_stanza_attrs attrs in
     let jid_from = maybe JID.of_string jid_from in
@@ -314,7 +314,7 @@ struct
         let err = StanzaError.parse_error
           (get_element (ns_client, "error") els) in
           callback_error session_data ?id ?jid_from ?jid_to ?lang err
-      else      
+      else
         let kind =
           match kind with
             | Some v -> (
@@ -359,7 +359,7 @@ struct
         }
         in
           callback session_data message_stanza
-            
+
   let send_message session_data ?id ?jid_from ?jid_to ?kind ?lang
       ?body ?subject ?thread ?(x=[]) () =
     let jid_to = maybe string_of_jid jid_to in
@@ -377,7 +377,7 @@ struct
       send session_data
         (Xmlstream.stanza_serialize session_data.ser
            (make_element (ns_client, "message") attrs els))
-        
+
   type presence_type =
     | Probe
     | Subscribe
@@ -385,7 +385,7 @@ struct
     | Unsubscribe
     | Unsubscribed
     | Unavailable
-        
+
   let string_of_presence_type = function
     | Probe -> "probe"
     | Subscribe -> "subscribe"
@@ -393,7 +393,7 @@ struct
     | Unsubscribe -> "unsubscribe"
     | Unsubscribed -> "unsubscribed"
     | Unavailable -> "unavailable"
-      
+
   type presence_show =
     | ShowChat
     | ShowAway
@@ -405,7 +405,7 @@ struct
     | ShowAway -> "away"
     | ShowDND -> "dnd"
     | ShowXA -> "xa"
-      
+
   type presence_content = {
     presence_type : presence_type option;
     show : presence_show option;
@@ -422,7 +422,7 @@ struct
         let err = StanzaError.parse_error
           (get_element (ns_client, "error") els) in
           callback_error session_data ?id ?jid_from ?jid_to ?lang err
-      else      
+      else
         let kind =
           match kind with
             | None -> None
@@ -481,7 +481,7 @@ struct
         }
         in
           callback session_data presence_stanza
-            
+
   let send_presence session_data ?id ?jid_from ?jid_to ?kind ?lang
       ?show ?status ?priority ?(x=[]) () =
     let jid_to = maybe string_of_jid jid_to in
@@ -500,7 +500,7 @@ struct
       send session_data
         (Xmlstream.stanza_serialize session_data.ser
            (make_element (ns_client, "presence") attrs els))
-        
+
   let send_error_reply session_data condition ?text ?lang qname attrs els =
     let ns = get_namespace qname in
     let error = make_error ~ns ?text ?lang condition in
@@ -508,23 +508,23 @@ struct
       send session_data
         (Xmlstream.stanza_serialize session_data.ser
            (make_element qname newattrs (error::els)))
-        
+
   let register_iq_request_handler session_data namespace handler =
     session_data.iq_request <-
       IQRequestCallback.add namespace handler session_data.iq_request
-      
+
   let unregister_iq_request_handler session_data namespace =
     session_data.iq_request <-
       IQRequestCallback.remove namespace session_data.iq_request
-      
+
   let register_stanza_handler session_data qname handler =
     session_data.stanza_handlers <-
       StanzaHandler.add qname handler session_data.stanza_handlers
-      
+
   let unregister_stanza_handler session_data qname =
     session_data.stanza_handlers <-
       StanzaHandler.remove qname session_data.stanza_handlers
-      
+
   let process_iq session_data attrs els =
     let id, jid_from, jid_to, kind, lang = parse_stanza_attrs attrs in
     let event =
@@ -576,12 +576,12 @@ struct
                 send session_data (Xmlstream.stanza_serialize
                                               session_data.ser xml)
         )
-          
+
         | IQResponse ev -> (
           match id with
             | None ->
               raise BadRequest
-            | Some id -> 
+            | Some id ->
               try
                 let f = IDCallback.find id session_data.iq_response in
                   session_data.iq_response <- IDCallback.remove id
@@ -589,7 +589,7 @@ struct
                   f ev jid_from jid_to lang ()
               with Not_found -> return ()
         )
-          
+
   let make_session session_data session_handler =
     make_iq_request session_data ~jid_from:session_data.myjid
       (IQSet (make_element (ns_xmpp_session, "session") [] []))
@@ -597,9 +597,9 @@ struct
         match ev with
           | IQResult _ -> session_handler session_data
           | IQError _err -> fail (Error "session") (* todo *))
-      
+
   let make_bind session_data session_handler =
-    make_iq_request session_data 
+    make_iq_request session_data
       (IQSet (make_element (ns_xmpp_bind, "bind") []
                 [make_simple_cdata (ns_xmpp_bind, "resource")
                     session_data.myjid.resource]))
@@ -614,10 +614,10 @@ struct
           | IQError _ ->
             raise (Error "bind")
       )
-      
+
   exception AuthError of string
   exception AuthFailure of string
-      
+
   let sasl_digest session_data password nextstep =
     let rec step1 session_data _attrs els =
       unregister_stanza_handler session_data (ns_xmpp_sasl, "challenge");
@@ -644,12 +644,12 @@ struct
       unregister_stanza_handler session_data (ns_xmpp_sasl, "failure");
       unregister_stanza_handler session_data (ns_xmpp_sasl, "success");
       let p = get_first_element els in
-	      fail (AuthFailure (get_name (get_qname p)))
+              fail (AuthFailure (get_name (get_qname p)))
     and step2_success session_data _attrs els =
       unregister_stanza_handler session_data (ns_xmpp_sasl, "challenge");
       unregister_stanza_handler session_data (ns_xmpp_sasl, "failure");
       unregister_stanza_handler session_data (ns_xmpp_sasl, "success");
-		  nextstep session_data
+                  nextstep session_data
 
     in
       register_stanza_handler session_data (ns_xmpp_sasl, "challenge") step1;
@@ -657,7 +657,7 @@ struct
         (Xmlstream.stanza_serialize session_data.ser
            (make_element (ns_xmpp_sasl, "auth")
               [make_attr "mechanism" "DIGEST-MD5"] []))
-        
+
   let sasl_plain session_data password nextstep =
     let sasl_data =
       Sasl.sasl_plain (session_data.myjid.node ^ "@" ^ session_data.myjid.domain)
@@ -668,13 +668,13 @@ struct
           unregister_stanza_handler session_data (ns_xmpp_sasl, "success");
           unregister_stanza_handler session_data (ns_xmpp_sasl, "failure");
           let p = get_first_element els in
-	          raise (AuthFailure (get_name (get_qname p)))
+                  raise (AuthFailure (get_name (get_qname p)))
         );
       register_stanza_handler session_data (ns_xmpp_sasl, "success")
         (fun session_data _attrs els ->
           unregister_stanza_handler session_data (ns_xmpp_sasl, "failure");
           unregister_stanza_handler session_data (ns_xmpp_sasl, "success");
-		      nextstep session_data
+                      nextstep session_data
         );
       send session_data
         (Xmlstream.stanza_serialize session_data.ser
@@ -705,14 +705,14 @@ struct
               (match lang with
                 | None -> []
                 | Some v -> [make_attr ~ns:ns_xml "lang" v])))
-    in    
+    in
       if List.mem "DIGEST-MD5" m then
         sasl_digest session_data password nextstep
       else if List.mem "PLAIN" m then
         sasl_plain session_data password nextstep
       else
         fail (AuthError "no known SASL method")
-      
+
   let starttls session_data tls_module lang password session_handler =
     register_stanza_handler session_data (ns_xmpp_tls, "proceed")
       (fun session_data _attrs els ->
@@ -736,7 +736,7 @@ struct
         unregister_stanza_handler session_data (ns_xmpp_tls, "proceed");
         unregister_stanza_handler session_data (ns_xmpp_tls, "failure");
         let p = get_first_element els in
-	        raise (AuthFailure (get_name (get_qname p)))
+                raise (AuthFailure (get_name (get_qname p)))
       );
     send session_data
       (Xmlstream.stanza_serialize session_data.ser
@@ -765,11 +765,11 @@ struct
                     starttls session_data m lang password session_handler
       );
     return ()
-      
+
   let close_stream session_data =
     send session_data
       (Xmlstream.stream_end session_data.ser (ns_streams, "stream"))
-      
+
   let stream_stanza session_data (qname, attrs, els) =
     if qname = (ns_streams, "error") then
       raise (StreamError (StreamError.parse_error els))
@@ -785,14 +785,14 @@ struct
               | BadRequest ->
                 send_error_reply session_data ERR_BAD_REQUEST qname attrs els
               | MalformedStanza -> return ()
-                
+
   let stream_start qname attrs =
     if qname = (ns_streams, "stream") &&
       get_attr_value "version" attrs  = "1.0" then
       return ()
     else
       fail (Error "bad stream header")
-        
+
   let stream_end session_data () = return ()
 
   let create_session_data plain_socket myjid user_data =
@@ -813,7 +813,7 @@ struct
         ser = ser;
         user_data = user_data
       }
-      
+
   let open_stream session_data ?tls_socket ?lang password session_handler =
     send session_data
       (Xmlstream.stream_header session_data.ser
@@ -848,7 +848,7 @@ struct
     let session_data = create_session_data plain_socket myjid user_data in
     open_stream session_data ?tls_socket ?lang password session_handler
     >>= fun () -> return session_data
-    
+
   let parse session_data =
     X.parse session_data.p
       stream_start (stream_stanza session_data) (stream_end session_data)
