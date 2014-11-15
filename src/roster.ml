@@ -2,6 +2,13 @@
  * (c) 2004-2012 Anastasia Gornostaeva
  *)
 
+type subscription_t =
+  | SubscriptionNone
+  | SubscriptionBoth
+  | SubscriptionFrom
+  | SubscriptionRemove
+  | SubscriptionTo
+
 module Make (X : XMPP.S) =
 struct
   open Xml
@@ -12,13 +19,6 @@ struct
 
   type ask_t =
     | AskSubscribe
-
-  type subscription_t =
-    | SubscriptionNone
-    | SubscriptionBoth
-    | SubscriptionFrom
-    | SubscriptionRemove
-    | SubscriptionTo
 
   type item = {
     group : string list;
