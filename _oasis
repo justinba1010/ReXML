@@ -12,7 +12,7 @@ Synopsis:    XMPP protocol implementation
 
 Library erm_xmpp
   Path:       src
-  Modules:    UTF8,
+  Modules:    Xmpp_UTF8,
               Xmpp_prep_tables,
               Xmpp_prep,
               Punycode,
