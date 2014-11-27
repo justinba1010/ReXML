@@ -16,19 +16,19 @@ Library erm_xmpp
               Xmpp_prep_tables,
               Xmpp_prep,
               Punycode,
-              StreamError, 
-              StanzaError, 
-              Xmlstream, 
-              Sasl, 
+              StreamError,
+              StanzaError,
+              Xmlstream,
+              Sasl,
               XMPP,
               JID,
               Roster,
               XEP_disco,
-              XEP_last, 
-              XEP_muc, 
-              XEP_stats, 
-              XEP_time, 
-              XEP_vcard, 
+              XEP_last,
+              XEP_muc,
+              XEP_stats,
+              XEP_time,
+              XEP_vcard,
               XEP_version,
               XEP_xdata
   BuildDepends: erm_xml (>= 0.3), cstruct, nocrypto
@@ -47,7 +47,7 @@ Executable lwt_test
   Build$: flag(tests)
   Install: false
   CompiledObject: best
-  MainIs: lwt_test.ml  
+  MainIs: lwt_test.ml
   BuildDepends: erm_xmpp, lwt, tls.lwt, erm_treap, otr
 
 Executable test_ie
@@ -56,7 +56,7 @@ Executable test_ie
   Install: false
   CompiledObject: best
   MainIs: test_ie.ml
-  BuildDepends: erm_xmpp, erm_treap  
+  BuildDepends: erm_xmpp, erm_treap
 
 Executable punycode_test
   Path: tests
@@ -64,8 +64,8 @@ Executable punycode_test
   Install: false
   CompiledObject: best
   MainIs: punycode_test.ml
-  BuildDepends: erm_xmpp, erm_treap  
-  
+  BuildDepends: erm_xmpp, erm_treap
+
 # Document api
 #   Title:      API reference
 #   InstallDir: $docdir
@@ -78,4 +78,3 @@ SourceRepository github
   Type:     git
   Location: git://github.com/ermine/xmpp.git
   Browser:  https://github.com/ermine/xmpp
-
