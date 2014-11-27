@@ -20,11 +20,11 @@ let nodeprep ?(strong=false) str =
       if strong then (
         if String.length str > 1023 then
           raise MalformedJID;
-        Xmpp_prep.strong_nodeprep (UTF8.decode str)
+        Xmpp_prep.strong_nodeprep (Xmpp_UTF8.decode str)
       ) else
-        Xmpp_prep.nodeprep (UTF8.decode str)
+        Xmpp_prep.nodeprep (Xmpp_UTF8.decode str)
     in
-      UTF8.encode normalized
+      Xmpp_UTF8.encode normalized
   with _ -> raise MalformedJID
 
 let nameprep ?(strong=false) str =
@@ -34,11 +34,11 @@ let nameprep ?(strong=false) str =
         let len = String.length str in
           if len < 1 || len > 1023 then
             raise MalformedJID;
-          Xmpp_prep.strong_nameprep (UTF8.decode str)
+          Xmpp_prep.strong_nameprep (Xmpp_UTF8.decode str)
       ) else
-        Xmpp_prep.nameprep (UTF8.decode str)
+        Xmpp_prep.nameprep (Xmpp_UTF8.decode str)
     in
-      UTF8.encode normalized
+      Xmpp_UTF8.encode normalized
   with _ -> raise MalformedJID
 
 let resourceprep ?(strong=false) str =
@@ -47,11 +47,11 @@ let resourceprep ?(strong=false) str =
       if strong then (
         if String.length str > 1023 then
           raise MalformedJID;
-        Xmpp_prep.strong_resourceprep (UTF8.decode str)
+        Xmpp_prep.strong_resourceprep (Xmpp_UTF8.decode str)
       ) else
-        Xmpp_prep.resourceprep (UTF8.decode str)
+        Xmpp_prep.resourceprep (Xmpp_UTF8.decode str)
     in
-      UTF8.encode normalized
+      Xmpp_UTF8.encode normalized
   with _ -> raise MalformedJID
 
 let of_string ?strong str =
@@ -143,7 +143,7 @@ let rec split acc part = function
 
 let to_idn jid =
   (* already nameprepared *)
-  let ustr = UTF8.decode jid.ldomain in
+  let ustr = Xmpp_UTF8.decode jid.ldomain in
   let is_bad c =
     c < 0x2D || (c > 0x2D && c < 0x30) ||
       (c > 0x39 && c < 0x41) || (c > 0x5C && c < 0x61) || (c > 0x7C && c < 0x80)
@@ -173,6 +173,6 @@ let to_idn jid =
               if len < 1 || len > 63 then
                 raise MalformedDomain
               else
-                UTF8.encode part
+                Xmpp_UTF8.encode part
     ) parts in
     String.concat "." eparts
