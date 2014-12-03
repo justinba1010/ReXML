@@ -91,10 +91,7 @@ let message_callback otr t stanza =
   let send = match stanza.content.body with
   | None -> print_endline "received nothing :/" ; []
   | Some v ->
-    let ctx, out, warn, received, plain = Otr.Handshake.handle otr.state v in
-    (match plain with
-     | None -> print_endline "no plaintext received!"
-     | Some p -> print_endline ("plain message: " ^ p)) ;
+    let ctx, out, warn, received = Otr.Handshake.handle otr.state v in
     (match warn with
      | None -> print_endline "no warn"
      | Some w -> print_endline ("warning: " ^ w)) ;
@@ -122,10 +119,7 @@ let message_callback otr t stanza =
           let msg2 = send "bla" in
           msg1 @ msg2
         | Some x when x = "fin" ->
-          let ctx, out, warn = Otr.Handshake.end_otr otr.state in
-          ( match warn with
-            | None -> ()
-            | Some t -> Printf.printf "warning from end_otr %s\n" t );
+          let ctx, out = Otr.Handshake.end_otr otr.state in
           otr.state <- ctx ;
           ( match out with
             | Some x -> [ x ]
