@@ -745,24 +745,16 @@ struct
   let start_stream session_data ?tls ?compress lang password session_handler =
     register_stanza_handler session_data (ns_streams, "features")
       (fun session_data _attrs els ->
-        unregister_stanza_handler session_data (ns_streams, "features");
-        let tls_el =
-          try Some (get_element (ns_xmpp_tls, "starttls") els)
-          with Not_found -> None in
-          match tls_el with
-            | None -> sasl_auth session_data els lang password session_handler
-            | Some el ->
-              if mem_child (ns_xmpp_tls, "required") el then
-                match tls with
-                  | None -> raise (Error "TLS is required")
-                  | Some m ->
-                    starttls session_data m lang password session_handler
-              else
-                match tls with
-                  | None ->
-                    sasl_auth session_data els lang password session_handler
-                  | Some m ->
-                    starttls session_data m lang password session_handler
+         unregister_stanza_handler session_data (ns_streams, "features");
+         let tls_el =
+           try Some (get_element (ns_xmpp_tls, "starttls") els)
+           with Not_found -> None
+         in
+         match tls, tls_el with
+         | None, None -> sasl_auth session_data els lang password session_handler
+         | Some m, Some el ->
+           starttls session_data m lang password session_handler
+         | _ -> raise (Error "TLS is required")
       );
     return ()
 
@@ -776,15 +768,16 @@ struct
     else
       let callback =
         try Some (StanzaHandler.find qname session_data.stanza_handlers)
-        with Not_found -> None in
-        match callback with
-          | None -> return ()
-          | Some f ->
-            try f session_data attrs els
-            with
-              | BadRequest ->
-                send_error_reply session_data ERR_BAD_REQUEST qname attrs els
-              | MalformedStanza -> return ()
+        with Not_found -> None
+      in
+      match callback with
+      | None -> return ()
+      | Some f ->
+        try f session_data attrs els
+        with
+        | BadRequest ->
+          send_error_reply session_data ERR_BAD_REQUEST qname attrs els
+        | MalformedStanza -> return ()
 
   let stream_start qname attrs =
     if qname = (ns_streams, "stream") &&
@@ -802,52 +795,46 @@ struct
       let module S = (val plain_socket : Socket) in
         S.read S.socket buf start len
     in
-      {
-        socket = plain_socket;
-        p = X.create read;
-        sid = 1;
-        iq_response = IDCallback.empty;
-        iq_request = IQRequestCallback.empty;
-        stanza_handlers = StanzaHandler.empty;
-        myjid = myjid;
-        ser = ser;
-        user_data = user_data
-      }
+    {
+      socket = plain_socket;
+      p = X.create read;
+      sid = 1;
+      iq_response = IDCallback.empty;
+      iq_request = IQRequestCallback.empty;
+      stanza_handlers = StanzaHandler.empty;
+      myjid = myjid;
+      ser = ser;
+      user_data = user_data
+    }
 
   let open_stream session_data ?tls_socket ?lang password session_handler =
     send session_data
       (Xmlstream.stream_header session_data.ser
          (ns_streams, "stream")
          (make_attr "to" session_data.myjid.domain ::
-            make_attr "version" "1.0" ::
-            (match lang with
-              | None -> []
-              | Some v -> [make_attr ~ns:ns_xml "lang" v]))) >>= fun () ->
-    start_stream session_data
-      ?tls:(match tls_socket with
-        | None -> None
-        | Some socket -> Some (fun session_data ->
+          make_attr "version" "1.0" ::
+          (match lang with
+           | None -> []
+           | Some v -> [make_attr ~ns:ns_xml "lang" v]))) >>= fun () ->
+    let tls = match tls_socket with
+      | None -> None
+      | Some socket -> Some (fun session_data ->
           socket () >>= fun socket ->
           session_data.socket <- socket;
           let read buf start len =
             let module S = (val socket : Socket) in
-              S.read S.socket buf start len
+            S.read S.socket buf start len
           in
-            X.reset session_data.p (Some read);
-            return ()
-        ))
-      lang password session_handler
+          X.reset session_data.p (Some read);
+          return ()
+        )
+    in
+    start_stream session_data ?tls lang password session_handler
 
-  let setup_session
-      ~myjid
-      ~user_data
-      ~(plain_socket : (module Socket))
-      ?(tls_socket : (unit -> (module Socket) M.t) option)
-      ?lang
-      ~password session_handler =
+  let setup_session ~myjid ~user_data ~(plain_socket : (module Socket)) ?(tls_socket : (unit -> (module Socket) M.t) option) ?lang ~password session_handler =
     let session_data = create_session_data plain_socket myjid user_data in
-    open_stream session_data ?tls_socket ?lang password session_handler
-    >>= fun () -> return session_data
+    open_stream session_data ?tls_socket ?lang password session_handler >>= fun () ->
+    return session_data
 
   let parse session_data =
     X.parse session_data.p
