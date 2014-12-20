@@ -91,43 +91,46 @@ let message_callback otr t stanza =
   let send = match stanza.content.body with
   | None -> print_endline "received nothing :/" ; []
   | Some v ->
-    let ctx, out, warn, received = Otr.Handshake.handle otr.state v in
-    (match warn with
-     | None -> print_endline "no warn"
-     | Some w -> print_endline ("warning: " ^ w)) ;
-    (match received with
-     | None -> print_endline "no text received"
-     | Some c -> print_endline ("received encrypted: " ^ c)) ;
+    let dump ctx = Sexplib.Sexp.to_string_hum (Otr.State.sexp_of_session ctx) in
+    print_endline (dump otr.state) ;
+    let ctx, out, user_data = Otr.Handshake.handle otr.state v in
     otr.state <- ctx ;
+    print_endline (dump otr.state) ;
+    List.iter (function
+        | `Warning w                       -> print_endline ("warning: " ^ w)
+        | `Received_error e                -> print_endline ("error: " ^ e)
+        | `Received e                      -> print_endline ("received unencrypted: " ^ e)
+        | `Received_encrypted e            -> print_endline ("received encrypted: " ^ e)
+        | `Established_encrypted_session _ -> print_endline "established secure session")
+      user_data ;
     let send msg =
       let ctx, out, warn = Otr.Handshake.send_otr otr.state msg in
-      ( match warn with
-        | None -> ()
-        | Some t -> Printf.printf "warning from send_otr %s\n" t );
       otr.state <- ctx ;
+      ( match warn with
+        | `Warning w        -> print_endline ("warning while sending " ^ w)
+        | `Sent s           -> print_endline ("sending unencrypted " ^ s)
+        | `Sent_encrypted s -> print_endline ("sending encrypted " ^ s) ) ;
       match out with
       | Some x -> [ x ]
       | None -> []
     in
     match out with
     | None ->
-      ( match received with
-        | Some x when x = "bla" ->
+      ( match List.filter (function `Received_encrypted x -> true | _ -> false) user_data with
+        | (`Received_encrypted x)::[] when x = "bla" ->
           []
-        | Some x when x = "bla2" ->
+        | (`Received_encrypted x)::[] when x = "bla2" ->
           let msg1 = send "bla" in
           let msg2 = send "bla" in
           msg1 @ msg2
-        | Some x when x = "fin" ->
+        | (`Received_encrypted x)::[] when x = "fin" ->
           let ctx, out = Otr.Handshake.end_otr otr.state in
           otr.state <- ctx ;
           ( match out with
             | Some x -> [ x ]
             | None -> [ "end_otr didn't want me to send anything" ] )
-        | Some x ->
-          send x
-        | None ->
-          send "nothing to send" )
+        | (`Received_encrypted x)::[] -> send x
+        | _ -> send "nothing to send" )
     | Some c -> [ c ]
   in
   Lwt_list.iter_s (fun out ->
@@ -152,7 +155,7 @@ let presence_error t ?id ?jid_from ?jid_to ?lang error =
   return ()
     
 
-let session t =
+let session starter t =
   print_endline "in session" ;
   let dsa = Nocrypto.Dsa.generate `Fips1024 in
   Printf.printf "my fp" ; Cstruct.hexdump (Otr.Crypto.OtrDsa.fingerprint (Nocrypto.Dsa.pub_of_priv dsa)) ;
@@ -174,23 +177,29 @@ let session t =
     (parse_presence ~callback:presence_callback ~callback_error:presence_error);
   print_endline "sending presence" ;
   send_presence t () >>= fun () ->
-  print_endline "returning" ;
-  return ()
+  ( match starter with
+    | None -> return ()
+    | Some x ->
+      let ctx, out = Otr.Handshake.start_otr otr.state in
+      otr.state <- ctx ;
+      send_message t ~jid_to:(JID.of_string x) ?body:(Some out) () ) >>= fun () ->
+  print_endline "returning" ; return ()
 
 let _ =
   let server = Sys.argv.(1)
   and username = Sys.argv.(2)
   and password = Sys.argv.(3)
   and resource = "xmpp3.0"
-  and port =
-    if Array.length Sys.argv < 5 then 5222 else int_of_string Sys.argv.(4) in
+  in
+
+  let starter = if Array.length Sys.argv > 4 then Some (Sys.argv.(4)) else None in
 
   let myjid = JID.make_jid username server resource in
   let inet_addr =
     try Unix.inet_addr_of_string server
     with Failure("inet_addr_of_string") ->
       (Unix.gethostbyname server).Unix.h_addr_list.(0) in
-  let sockaddr = Unix.ADDR_INET (inet_addr, port) in
+  let sockaddr = Unix.ADDR_INET (inet_addr, 5222) in
     Lwt_main.run (
       PlainSocket.open_connection sockaddr >>= fun socket_data ->
       let module Socket_module = struct type t = PlainSocket.socket
@@ -211,7 +220,7 @@ let _ =
           ~myjid
           ~plain_socket:(module Socket_module : XMPPClient.Socket)
           ~tls_socket:make_tls
-          ~password session >>=
+          ~password (session starter) >>=
           (fun session_data -> XMPPClient.parse session_data >>= fun () ->
             let module S = (val session_data.socket : Socket) in
               S.close S.socket
