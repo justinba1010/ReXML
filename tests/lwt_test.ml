@@ -92,10 +92,10 @@ let message_callback otr t stanza =
   | None -> print_endline "received nothing :/" ; []
   | Some v ->
     let dump ctx = Sexplib.Sexp.to_string_hum (Otr.State.sexp_of_session ctx) in
-    print_endline (dump otr.state) ;
+    (* print_endline (dump otr.state) ; *)
     let ctx, out, user_data = Otr.Handshake.handle otr.state v in
     otr.state <- ctx ;
-    print_endline (dump otr.state) ;
+    (* print_endline (dump otr.state) ; *)
     List.iter (function
         | `Warning w                       -> print_endline ("warning: " ^ w)
         | `Received_error e                -> print_endline ("error: " ^ e)
@@ -129,7 +129,13 @@ let message_callback otr t stanza =
           ( match out with
             | Some x -> [ x ]
             | None -> [ "end_otr didn't want me to send anything" ] )
-        | (`Received_encrypted x)::[] -> send x
+        | (`Received_encrypted x)::[] ->
+          (* let rec s acc = function
+            | 0 -> List.rev acc
+            | n -> s ((send x)@acc) (pred n)
+            in
+             s [] (succ (Random.int 2)) *)
+          send x
         | _ -> send "nothing to send" )
     | Some c -> [ c ]
   in
