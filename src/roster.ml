@@ -92,6 +92,7 @@ struct
             else
               item :: acc
         | Xmlcdata _ -> acc
+        | Xmlelement ((_, _), _, _) -> acc
         ) [] els in
     (ver, List.rev items)
 
