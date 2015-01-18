@@ -119,7 +119,7 @@ struct
     let callback ev jid_from jid_to lang () =
       match ev with
       | IQResult el ->
-        callback ?jid_from ?jid_to ?lang
+        callback ?jid_from ?jid_to ?lang el
       | IQError err ->
         error_callback err
     in
