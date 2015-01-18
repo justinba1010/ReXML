@@ -1,0 +1,12 @@
+S src/
+S aux/
+
+B _build/src/
+B _build/aux/
+
+PKG erm_xml
+PKG cstruct
+PKG nocrypto
+PKG lwt
+
+EXT lwt
