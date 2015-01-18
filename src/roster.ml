@@ -130,7 +130,7 @@ struct
           gs
       in
       match remove, name, groups with
-      | Some x, _, _ -> (make_attr "subscription" "remove" :: attr, [])
+      | Some _, _, _ -> (make_attr "subscription" "remove" :: attr, [])
       | None, Some x, None -> (make_attr "name" x :: attr, [])
       | None, Some x, Some y -> (make_attr "name" x :: attr, group y)
       | None, None, Some y -> (attr, group y)
