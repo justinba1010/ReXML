@@ -92,7 +92,6 @@ struct
             else
               item :: acc
         | Xmlcdata _ -> acc
-        | Xmlelement ((_, _), _, _) -> acc
         ) [] els in
     (ver, List.rev items)
 
@@ -116,7 +115,7 @@ struct
       (IQGet (make_element (ns_roster, "query") [] []))
       callback
 
-  let put xmpp jid ?name ?groups ?jid_from ?jid_to ?lang ?(error_callback=ignore) callback =
+  let put xmpp jid ?remove ?name ?groups ?jid_from ?jid_to ?lang ?(error_callback=ignore) callback =
     let callback ev jid_from jid_to lang () =
       match ev with
       | IQResult el ->
@@ -124,36 +123,22 @@ struct
       | IQError err ->
         error_callback err
     in
-    let attr = [make_attr "jid" jid]
-    in
-    let attr =
-      match name with
-      | Some x -> (make_attr "name" x) :: attr
-      | None   -> attr
-    in
-    let groupelem =
-      match groups with
-      | Some x -> List.map (fun e -> (make_element (no_ns, "group") [] [e])) x
-      | None   -> []
+    let attr = [make_attr "jid" jid] in
+    let attr, groupelem =
+      let group gs = List.map (fun e ->
+          make_element (no_ns, "group") [] [e])
+          gs
+      in
+      match remove, name, groups with
+      | Some x, _, _ -> (make_attr "subscription" "remove" :: attr, [])
+      | None, Some x, None -> (make_attr "name" x :: attr, [])
+      | None, Some x, Some y -> (make_attr "name" x :: attr, group y)
+      | None, None, Some y -> (attr, group y)
+      | None, None, None -> assert false
     in
     make_iq_request xmpp ?jid_from ?jid_to ?lang
       (IQSet (make_element (ns_roster, "query") []
                 [make_element (no_ns, "item") attr groupelem]))
-      callback
-
-  let remove xmpp jid ?jid_from ?jid_to ?lang ?(error_callback=ignore) callback =
-    let callback ev jid_from jid_to lang () =
-      match ev with
-      | IQResult el ->
-        callback ?jid_from ?jid_to ?lang
-      | IQError err ->
-        error_callback err
-    in
-    let attr = [make_attr "jid" jid; make_attr "subscription" "remove"]
-    in
-    make_iq_request xmpp ?jid_from ?jid_to ?lang
-      (IQSet (make_element (ns_roster, "query") []
-                [make_element (no_ns, "item") attr []]))
       callback
 
 end
