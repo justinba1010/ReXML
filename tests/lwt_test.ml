@@ -93,7 +93,7 @@ let message_callback otr t stanza =
   | Some v ->
     let dump ctx = Sexplib.Sexp.to_string_hum (Otr.State.sexp_of_session ctx) in
     (* print_endline (dump otr.state) ; *)
-    let ctx, out, user_data = Otr.Handshake.handle otr.state v in
+    let ctx, out, user_data = Otr.Engine.handle otr.state v in
     otr.state <- ctx ;
     (* print_endline (dump otr.state) ; *)
     List.iter (function
@@ -101,10 +101,14 @@ let message_callback otr t stanza =
         | `Received_error e                -> print_endline ("error: " ^ e)
         | `Received e                      -> print_endline ("received unencrypted: " ^ e)
         | `Received_encrypted e            -> print_endline ("received encrypted: " ^ e)
-        | `Established_encrypted_session _ -> print_endline "established secure session")
+        | `Established_encrypted_session _ -> print_endline "established secure session"
+        | `SMP_awaiting_secret             -> print_endline "awaiting SMP secret"
+        | `SMP_failure                     -> print_endline "SMP failure"
+        | `SMP_received_question q         -> print_endline ("SMP question " ^ q)
+        | `SMP_success                     -> print_endline "SMP success" )
       user_data ;
     let send msg =
-      let ctx, out, warn = Otr.Handshake.send_otr otr.state msg in
+      let ctx, out, warn = Otr.Engine.send_otr otr.state msg in
       otr.state <- ctx ;
       ( match warn with
         | `Warning w        -> print_endline ("warning while sending " ^ w)
@@ -116,6 +120,10 @@ let message_callback otr t stanza =
     in
     match out with
     | None ->
+(*      if List.length (List.filter (function `Established_encrypted_session _ -> true | _ -> false) user_data) > 0 then
+        let ctx, Some out, _r = Otr.Engine.start_smp otr.state "bla" in
+        otr.state <- ctx ; [out]
+        else *)
       ( match List.filter (function `Received_encrypted x -> true | _ -> false) user_data with
         | (`Received_encrypted x)::[] when x = "bla" ->
           []
@@ -124,7 +132,7 @@ let message_callback otr t stanza =
           let msg2 = send "bla" in
           msg1 @ msg2
         | (`Received_encrypted x)::[] when x = "fin" ->
-          let ctx, out = Otr.Handshake.end_otr otr.state in
+          let ctx, out = Otr.Engine.end_otr otr.state in
           otr.state <- ctx ;
           ( match out with
             | Some x -> [ x ]
@@ -186,7 +194,7 @@ let session starter t =
   ( match starter with
     | None -> return ()
     | Some x ->
-      let ctx, out = Otr.Handshake.start_otr otr.state in
+      let ctx, out = Otr.Engine.start_otr otr.state in
       otr.state <- ctx ;
       send_message t ~jid_to:(JID.of_string x) ?body:(Some out) () ) >>= fun () ->
   print_endline "returning" ; return ()
