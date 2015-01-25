@@ -91,7 +91,7 @@ let message_callback otr t stanza =
   let send = match stanza.content.body with
   | None -> print_endline "received nothing :/" ; []
   | Some v ->
-    let dump ctx = Sexplib.Sexp.to_string_hum (Otr.State.sexp_of_session ctx) in
+    (* let dump ctx = Sexplib.Sexp.to_string_hum (Otr.State.sexp_of_session ctx) in *)
     (* print_endline (dump otr.state) ; *)
     let ctx, out, user_data = Otr.Engine.handle otr.state v in
     otr.state <- ctx ;
@@ -172,8 +172,9 @@ let presence_error t ?id ?jid_from ?jid_to ?lang error =
 let session starter t =
   print_endline "in session" ;
   let dsa = Nocrypto.Dsa.generate `Fips1024 in
-  Printf.printf "my fp" ; Cstruct.hexdump (Otr.Crypto.OtrDsa.fingerprint (Nocrypto.Dsa.pub_of_priv dsa)) ;
-  let otr = { state = (Otr.State.empty_session ~dsa ~policies:[`REQUIRE_ENCRYPTION] ()) } in
+  let config = Otr.State.config Otr.State.all_versions [`REQUIRE_ENCRYPTION] dsa in
+  Printf.printf "my fp" ; Cstruct.hexdump (Cstruct.of_string (Otr.Utils.own_fingerprint config)) ;
+  let otr = { state = (Otr.State.new_session config ()) } in
   register_iq_request_handler t Version.ns_version
     (fun ev _jid_from _jid_to _lang () ->
       match ev with
