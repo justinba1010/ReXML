@@ -158,6 +158,7 @@ struct
   let ns_xmpp_sasl = Some "urn:ietf:params:xml:ns:xmpp-sasl"
   let ns_xmpp_bind = Some "urn:ietf:params:xml:ns:xmpp-bind"
   let ns_xmpp_session = Some "urn:ietf:params:xml:ns:xmpp-session"
+  let ns_receipts = Some "urn:xmpp:receipts"
 
   type iq_request =
     | IQSet of element
