@@ -62,7 +62,7 @@ struct
     Tls_lwt.Unix.write s (Cstruct.of_string str)
 
   let switch fd host =
-    Tls_lwt.rng_init () >>= fun () ->
+    Nocrypto_entropy_lwt.initialize () >>= fun () ->
     X509_lwt.authenticator (`Ca_dir "certificates") >>= fun authenticator ->
     let config = Tls.Config.client ~authenticator () in
     Tls_lwt.Unix.client_of_fd config ~host fd
