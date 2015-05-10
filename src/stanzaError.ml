@@ -95,7 +95,7 @@ let string_of_condition = function
   | ERR_SUBSCRIPTION_REQUIRED -> "subscription-required"
   | ERR_UNDEFINED_CONDITION -> "undefined-condition"
   | ERR_UNEXPECTED_REQUEST -> "unexpected-request"
-  | UNKNOWN_CONDITION _ -> raise (Error "unknown condition")
+  | UNKNOWN_CONDITION x -> "unknown: " ^ x
 
 let error_type_of_condition = function
   | ERR_BAD_REQUEST -> Modify
