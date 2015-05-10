@@ -27,9 +27,11 @@ struct
     | Server
     | Store
 
+  let make_disco_query elements =
+    make_element (ns_disco_info, "query") [] elements
+
   let make_feature_var feature =
-    Xmlelement ((ns_disco_info, "feature"),
-                [make_attr "var" feature], [])
+    Xmlelement ((None, "feature"), [make_attr "var" feature], [])
 
   let make_disco_item jid ?node name =
     let attr = match node with
