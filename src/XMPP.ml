@@ -78,6 +78,8 @@ sig
     thread : string option
   }
 
+  val send : 'a session_data -> string -> unit t
+
   val send_message :
     'a session_data ->
     ?id:Xml.cdata ->
