@@ -177,6 +177,7 @@ let sasl_digest_response chl username digest_uri passwd =
   in
     if List.mem "auth" qop then
       let qop_method = "auth" in
+      let digest_uri = digest_uri ^ realm in
       let response = response_value ~username ~realm
         ~nonce ~cnonce ~nc ~qop:qop_method ~digest_uri ~passwd in
       let resp = Printf.sprintf
