@@ -169,7 +169,7 @@ let parse_digest_md5_challenge str =
     with Not_found ->
       raise (Error "Malformed SASL challenge")
 
-let sasl_digest_response chl username digest_uri passwd =
+let sasl_digest_response chl username domain digest_uri passwd =
   let str = b64dec chl in
   let realm, qop, nonce = parse_digest_md5_challenge str
   and cnonce = make_cnonce ()
@@ -177,7 +177,12 @@ let sasl_digest_response chl username digest_uri passwd =
   in
     if List.mem "auth" qop then
       let qop_method = "auth" in
-      let digest_uri = digest_uri ^ realm in
+      let digest_uri =
+        if realm = "" then
+          digest_uri ^ domain
+        else
+          digest_uri ^ realm
+      in
       let response = response_value ~username ~realm
         ~nonce ~cnonce ~nc ~qop:qop_method ~digest_uri ~passwd in
       let resp = Printf.sprintf
