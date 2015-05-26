@@ -172,9 +172,9 @@ let presence_error t ?id ?jid_from ?jid_to ?lang error =
 let session starter t =
   print_endline "in session" ;
   let dsa = Nocrypto.Dsa.generate `Fips1024 in
-  let config = Otr.State.config Otr.State.all_versions [`REQUIRE_ENCRYPTION] dsa in
-  Printf.printf "my fp" ; Cstruct.hexdump (Cstruct.of_string (Otr.Utils.own_fingerprint config)) ;
-  let otr = { state = (Otr.State.new_session config ()) } in
+  let config = Otr.State.config [`V2] [`REQUIRE_ENCRYPTION] in
+  Printf.printf "my fp" ; Cstruct.hexdump (Cstruct.of_string (Otr.Utils.own_fingerprint dsa)) ;
+  let otr = { state = (Otr.State.new_session config dsa ()) } in
   register_iq_request_handler t Version.ns_version
     (fun ev _jid_from _jid_to _lang () ->
       match ev with
