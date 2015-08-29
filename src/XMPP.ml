@@ -374,7 +374,7 @@ struct
 		let delay_stamp = string_of_option delay_stamp_opt in
 		  (x, body, subject, thread,
 		   Some {delay_from; delay_stamp; delay_legacy = false})
-	      else if qname = (ns_delay_legacy, "x") then
+	      else if qname = (ns_delay_legacy, "x") && delay = None then
 		let delay_from, delay_stamp_opt = parse_delay_attrs _attrs in
 		let delay_stamp = string_of_option delay_stamp_opt in
 		  (x, body, subject, thread,
