@@ -85,7 +85,7 @@ sig
     message_delay : delay option
   }
 
-  val send : 'a session_data -> string -> unit t
+  val send : 'a session_data -> bytes -> unit t
 
   val send_message :
     'a session_data ->
@@ -189,8 +189,8 @@ struct
   sig
     type t
     val socket : t
-    val read : t -> string -> int -> int -> int M.t
-    val write : t -> string -> unit M.t
+    val read : t -> bytes -> int -> int -> int M.t
+    val write : t -> bytes -> unit M.t
     val close : t -> unit M.t
   end
 
