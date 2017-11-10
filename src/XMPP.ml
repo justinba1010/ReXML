@@ -713,8 +713,7 @@ struct
 
   let sasl_plain session_data password nextstep =
     let sasl_data =
-      Sasl.sasl_plain (session_data.myjid.node ^ "@" ^ session_data.myjid.domain)
-                      session_data.myjid.node password
+      Sasl.sasl_plain session_data.myjid.node session_data.myjid.node password
     in
       register_stanza_handler session_data (ns_xmpp_sasl, "failure")
         (fun session_data _attrs els ->

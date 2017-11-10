@@ -197,6 +197,8 @@ let sasl_digest_rspauth chl =
   let _rspauth = List.assoc "rspauth" pairs in
   ()
 
-let sasl_plain username middle passwd =
-  let str = Printf.sprintf "%s\x00%s\x00%s" username middle passwd in
+let sasl_plain authorization_id authentication_id passwd =
+  let str =
+    String.concat "\000" [ authorization_id ; authentication_id ; passwd ]
+  in
   b64enc str
