@@ -18,8 +18,8 @@ struct
   include M
 
   type stream = {
-    read : string -> int -> int -> int M.t;
-    buf : string;
+    read : bytes -> int -> int -> int M.t;
+    buf : bytes;
     mutable i : int;
     mutable len : int;
     mutable is_final : bool
@@ -39,7 +39,7 @@ struct
     
   let rec get s =
     if s.i < s.len then
-      let ch1 = s.buf.[s.i] in
+      let ch1 = Bytes.get s.buf s.i in
         s.i <- s.i + 1;
         match ch1 with
           | '\000'..'\127' -> return (Some (Char.code ch1))
@@ -47,7 +47,7 @@ struct
           | '\192'..'\223' ->
             let rec cont () =
               if s.i < s.len then
-                let ch2 = s.buf.[s.i] in
+                let ch2 = Bytes.get s.buf s.i in
                   s.i <- s.i + 1;
                   let n1 = Char.code ch1 in
                   let n2 = Char.code ch2 in
@@ -65,11 +65,11 @@ struct
           | '\224'..'\239' ->
             let rec cont1 () =
               if s.i < s.len then
-                let ch2 = s.buf.[s.i] in
+                let ch2 = Bytes.get s.buf s.i in
                   s.i <- s.i + 1;
                   let rec cont2 () =
                     if s.i < s.len then
-                      let ch3 = s.buf.[s.i] in
+                      let ch3 = Bytes.get s.buf s.i in
                         s.i <- s.i + 1;
                         let n1 = Char.code ch1
                         and n2 = Char.code ch2
@@ -100,15 +100,15 @@ struct
           | '\240'..'\247' -> 
             let rec cont1 () =
               if s.i < s.len then
-                let ch2 = s.buf.[s.i] in
+                let ch2 = Bytes.get s.buf s.i in
                   s.i <- s.i + 1;
                   let rec cont2 () =
                     if s.i < s.len then
-                      let ch3 = s.buf.[s.i] in
+                      let ch3 = Bytes.get s.buf s.i in
                         s.i <- s.i + 1;
                         let rec cont3 () =
                           if s.i < s.len then
-                            let ch4 = s.buf.[s.i] in
+                            let ch4 = Bytes.get s.buf s.i in
                               s.i <- s.i + 1;
                               let n1 = Char.code ch1
                               and n2 = Char.code ch2
@@ -154,7 +154,7 @@ struct
 
   let make_stream read =
     { read = read;
-      buf = String.create 8192;
+      buf = Bytes.create 8192;
       i = 0;
       len = 0;
       is_final = false
@@ -209,11 +209,11 @@ module type S = functor (M : MONAD) ->
 sig
   type p
   exception XmlError of string
-  val create : (string -> int -> int -> int M.t) -> p
+  val create : (bytes -> int -> int -> int M.t) -> p
   val parse : p -> (Xml.qname -> Xml.attribute list -> unit M.t) ->
     (Xml.qname * Xml.attribute list * Xml.element list -> unit M.t) ->
     (unit -> unit M.t) -> unit M.t
-  val reset : p -> (string -> int -> int -> int M.t) option -> unit
+  val reset : p -> (bytes -> int -> int -> int M.t) option -> unit
 end
   
 module XmlStream (M : MONAD) =
@@ -381,7 +381,7 @@ struct
     stack_ns : (Xml.qname * (Xml.namespace * Xml.prefix) list) Stack.t;
     state : XmlParser.state;
     strm : IterStream.stream;
-    mutable read : string -> int -> int -> int M.t;
+    mutable read : bytes -> int -> int -> int M.t;
     mutable cont : IE.input -> X.token IE.t;
     source : IE.input
   }
@@ -499,8 +499,9 @@ let bind_prefix ser prefix namespace =
 let stanza_serialize ser el =
   let buf = Buffer.create 30 in
   let out = Buffer.add_string buf in
-    Xml.Serialization.aux_serialize [] ser out el;
-    Buffer.contents buf
+  Xml.Serialization.aux_serialize [] ser out el;
+  let str = Buffer.contents buf in
+  Bytes.unsafe_of_string str
   
 let stream_header ser qname attrs =
   let buf = Buffer.create 30 in
@@ -509,22 +510,24 @@ let stream_header ser qname attrs =
     out "<";
     out (Xml.Serialization.string_of_qname ser qname);
     let lnss = local_namespaces ser.default_nss ser qname attrs in
-      if attrs <> [] then (
-        out " ";
-        out (string_of_list (string_of_attr ser) " " attrs)
-      );
-      if lnss <> [] then (
-        out " ";
-        out (string_of_list (string_of_ns ser) " " ser.default_nss)
-      );
-      out ">";
-      Buffer.contents buf
+    if attrs <> [] then (
+      out " ";
+      out (string_of_list (string_of_attr ser) " " attrs)
+    );
+    if lnss <> [] then (
+      out " ";
+      out (string_of_list (string_of_ns ser) " " ser.default_nss)
+    );
+    out ">";
+    let str = Buffer.contents buf in
+    Bytes.unsafe_of_string str
       
 let stream_end ser qname =
   let buf = Buffer.create 30 in
   let out = Buffer.add_string buf in
-    out "</";
-    out (string_of_qname ser qname);
-    out ">";
-    Buffer.contents buf
+  out "</";
+  out (string_of_qname ser qname);
+  out ">";
+  let str = Buffer.contents buf in
+  Bytes.unsafe_of_string str
   
