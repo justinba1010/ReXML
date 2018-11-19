@@ -1,4 +1,4 @@
-# ReXML
+# ReXML [djb_rexml](https://www.npmjs.com/package/djb_rexml)
 
 A bucklescript plug-in for the XML library originally written in OCaml.
 
