@@ -1,9 +1,12 @@
 {
-  "name": "rexml",
-  "version": "1.0.0",
+  "name": "djb_rexml",
+  "version": "1.0.1",
   "description": "Fork of XML Library for Bucklescript",
   "main": "index.js",
-  "repository": "git@github.com:justinba1010/ReXML.git",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/justinba1010/rexml.git"
+  },
   "author": "Justin Baum <justin.baum@ninefx.com>",
   "scripts": {
     "deps": "./dependencies.sh",
@@ -13,10 +16,6 @@
   },
   "dependencies": {
     "bs-platform": "^4.0.7"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/justinba1010/rexml.git"
   },
   "keywords": [
     "reason",
