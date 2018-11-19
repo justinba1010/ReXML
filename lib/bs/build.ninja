@@ -1,0 +1,75 @@
+bs_package_flags = -bs-package-map xml
+src_root_dir = /Users/justinbaum/reason_work/rexml
+bsc = /Users/justinbaum/reason_work/rexml/node_modules/bs-platform/lib/bsc.exe
+bsdep = /Users/justinbaum/reason_work/rexml/node_modules/bs-platform/lib/bsb_helper.exe
+warnings = -w -30-40+6+7+27+32..39+44+45+101 -warn-error +101
+bsc_flags = -bs-suffix -nostdlib -I '/Users/justinbaum/reason_work/rexml/node_modules/bs-platform/lib/ocaml' -bs-no-version-header -bs-super-errors -color always
+ppx_flags = 
+bs_package_includes = 
+bs_package_dev_includes = 
+namespace = -ns Xml
+bsb_dir_group = 0
+refmt = /Users/justinbaum/reason_work/rexml/node_modules/bs-platform/lib/refmt.exe
+reason_react_jsx = 
+refmt_flags = --print binary
+bsc_lib_includes = -I . -I src
+rule build_ast_and_module_sets_from_re
+  command = ${bsc} -pp "${refmt} ${refmt_flags}" ${reason_react_jsx}  ${ppx_flags} ${warnings} ${bsc_flags} -c -o ${out} -bs-syntax-only -bs-binary-ast -impl ${in}
+  description = [34mBuilding[39m [2m${out}[22m
+build src/xml.mlast : build_ast_and_module_sets_from_re $src_root_dir/src/xml.re
+rule build_deps
+  command = ${bsdep} ${namespace} -g ${bsb_dir_group} -MD ${in}
+  description = [34mBuilding[39m [2m${out}[22m
+build src/xml.mlast.d : build_deps src/xml.mlast
+rule build_cmj_cmi
+  command = ${bsc} ${bs_package_flags} -bs-assume-no-mli -bs-no-builtin-ppx-ml -bs-no-implicit-include ${bs_package_includes} ${bsc_lib_includes} ${bsc_extra_includes} ${warnings} ${bsc_flags} -o ${out} -c  ${in} $postbuild
+  depfile = ${in}.d
+  description = [34mBuilding[39m [2m${out}[22m
+build src/xml-Xml.cmj |  $src_root_dir/src/xml.bs.js src/xml-Xml.cmi : build_cmj_cmi src/xml.mlast
+  bsc_flags = $bsc_flags -bs-re-out -bs-super-errors
+  bs_package_flags = $bs_package_flags  -bs-package-output commonjs:src
+build src/xmllexer.mlast : build_ast_and_module_sets_from_re $src_root_dir/src/xmllexer.re
+build src/xmllexer.mlast.d : build_deps src/xmllexer.mlast
+build src/xmllexer-Xml.cmj |  $src_root_dir/src/xmllexer.bs.js src/xmllexer-Xml.cmi : build_cmj_cmi src/xmllexer.mlast
+  bsc_flags = $bsc_flags -bs-re-out -bs-super-errors
+  bs_package_flags = $bs_package_flags  -bs-package-output commonjs:src
+build src/light_xml.mlast : build_ast_and_module_sets_from_re $src_root_dir/src/light_xml.re
+build src/light_xml.mlast.d : build_deps src/light_xml.mlast
+build src/light_xml-Xml.cmj |  $src_root_dir/src/light_xml.bs.js src/light_xml-Xml.cmi : build_cmj_cmi src/light_xml.mlast
+  bsc_flags = $bsc_flags -bs-re-out -bs-super-errors
+  bs_package_flags = $bs_package_flags  -bs-package-output commonjs:src
+build src/xmllexerE.mlast : build_ast_and_module_sets_from_re $src_root_dir/src/xmllexerE.re
+build src/xmllexerE.mlast.d : build_deps src/xmllexerE.mlast
+build src/xmllexerE-Xml.cmj |  $src_root_dir/src/xmllexerE.bs.js src/xmllexerE-Xml.cmi : build_cmj_cmi src/xmllexerE.mlast
+  bsc_flags = $bsc_flags -bs-re-out -bs-super-errors
+  bs_package_flags = $bs_package_flags  -bs-package-output commonjs:src
+build src/xmllexerI.mlast : build_ast_and_module_sets_from_re $src_root_dir/src/xmllexerI.re
+build src/xmllexerI.mlast.d : build_deps src/xmllexerI.mlast
+build src/xmllexerI-Xml.cmj |  $src_root_dir/src/xmllexerI.bs.js src/xmllexerI-Xml.cmi : build_cmj_cmi src/xmllexerI.mlast
+  bsc_flags = $bsc_flags -bs-re-out -bs-super-errors
+  bs_package_flags = $bs_package_flags  -bs-package-output commonjs:src
+build src/xml_decode.mlast : build_ast_and_module_sets_from_re $src_root_dir/src/xml_decode.re
+build src/xml_decode.mlast.d : build_deps src/xml_decode.mlast
+build src/xml_decode-Xml.cmj |  $src_root_dir/src/xml_decode.bs.js src/xml_decode-Xml.cmi : build_cmj_cmi src/xml_decode.mlast
+  bsc_flags = $bsc_flags -bs-re-out -bs-super-errors
+  bs_package_flags = $bs_package_flags  -bs-package-output commonjs:src
+build src/xml_encode.mlast : build_ast_and_module_sets_from_re $src_root_dir/src/xml_encode.re
+build src/xml_encode.mlast.d : build_deps src/xml_encode.mlast
+build src/xml_encode-Xml.cmj |  $src_root_dir/src/xml_encode.bs.js src/xml_encode-Xml.cmi : build_cmj_cmi src/xml_encode.mlast
+  bsc_flags = $bsc_flags -bs-re-out -bs-super-errors
+  bs_package_flags = $bs_package_flags  -bs-package-output commonjs:src
+build src/xmllexerI2.mlast : build_ast_and_module_sets_from_re $src_root_dir/src/xmllexerI2.re
+build src/xmllexerI2.mlast.d : build_deps src/xmllexerI2.mlast
+build src/xmllexerI2-Xml.cmj |  $src_root_dir/src/xmllexerI2.bs.js src/xmllexerI2-Xml.cmi : build_cmj_cmi src/xmllexerI2.mlast
+  bsc_flags = $bsc_flags -bs-re-out -bs-super-errors
+  bs_package_flags = $bs_package_flags  -bs-package-output commonjs:src
+build src/xmllexer_generic.mlast : build_ast_and_module_sets_from_re $src_root_dir/src/xmllexer_generic.re
+build src/xmllexer_generic.mlast.d : build_deps src/xmllexer_generic.mlast
+build src/xmllexer_generic-Xml.cmj |  $src_root_dir/src/xmllexer_generic.bs.js src/xmllexer_generic-Xml.cmi : build_cmj_cmi src/xmllexer_generic.mlast
+  bsc_flags = $bsc_flags -bs-re-out -bs-super-errors
+  bs_package_flags = $bs_package_flags  -bs-package-output commonjs:src
+rule build_package
+  command = ${bsc} -w -49 -no-alias-deps -c ${in}
+  description = [34mBuilding[39m [2m${out}[22m
+build Xml.cmi : build_package Xml.mlmap
+build build.ninja : phony  ||  Xml.cmi src/xmllexer_generic.mlast.d src/xmllexerI2.mlast.d src/xml_encode.mlast.d src/xml_decode.mlast.d src/xmllexerI.mlast.d src/xmllexerE.mlast.d src/light_xml.mlast.d src/xmllexer.mlast.d src/xml.mlast.d
